@@ -48,7 +48,6 @@ start_watchdog() {
             [ -s "$1" ] || continue
             while IFS= read -r _d; do
                 if [ -d "$_d" ]; then
-                    log_msg "INFO" "SCAN" "看门狗：目录出现 $_d"
                     # 读取 STARTUP_SCAN：被动扫描总开关，目录出现后补扫存量文件
                     if [ "${STARTUP_SCAN:-1}" = "1" ]; then
                         find "$_d" -type f 2>/dev/null | while IFS= read -r _f; do
@@ -116,6 +115,7 @@ while true; do
             [ "$_diff" -lt 1 ] && continue
         fi
         printf '%s\n' "$_now" > "$_db_file"
+        is_tmp_file "$_fname" && continue
         printf '%s\n' "$_filepath" >> "$QUEUE_IN"
     done &
     PIPELINE_PID=$!

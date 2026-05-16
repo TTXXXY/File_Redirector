@@ -60,7 +60,6 @@ _check_and_revive() {
     log_msg "WARN" "SYS" "watchdog：拉起后服务未就绪，下轮重试"
 }
 
-log_msg "INFO" "SYS" "watchdog 启动：PID=$$"
 echo -1000 > "/proc/$$/oom_score_adj" 2>/dev/null || true
 
 while true; do

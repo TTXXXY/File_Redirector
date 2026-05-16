@@ -179,11 +179,8 @@ main() {
     _start_monitor
 
     # ── 启动看门狗 ──
-    if pkill -f "$MODDIR/scripts/watchdog.sh" 2>/dev/null; then
+    pkill -f "$MODDIR/scripts/watchdog.sh" 2>/dev/null && \
         log_msg "INFO" "SYS" "清理旧看门狗实例"
-    else
-        log_msg "INFO" "SYS" "无旧看门狗实例"
-    fi
     sh "$MODDIR/scripts/watchdog.sh" 9>&- 2>>"$LOG_FILE" &
     WATCHDOG_PID=$!
     printf '%s\n' "$WATCHDOG_PID" > "$WATCHDOG_PID_FILE" 2>/dev/null || true
