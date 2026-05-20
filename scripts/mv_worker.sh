@@ -98,6 +98,9 @@ while [ "$_try" -le 2 ]; do
 
     # 校验通过，先将源路径记入 done.list，防止 rm 失败后 inotify 二次触发重复搬运
     printf '%s\n' "$SRC" >> "$QUEUE_DIR/done.list" 2>/dev/null || true
+    # 还原源文件时间戳（mtime/atime），确保 MediaStore 扫描后 date_modified 正确
+    # 必须在 rm 之前执行，rm 后源文件消失则无法引用
+    touch -r "$SRC" "$DST" 2>/dev/null || true
     rm "$SRC" 2>/dev/null || true
     log_msg "INFO" "FILE" "cp+校验(第${_try}次): $SRC → $DST"
     sh "$VAR_MEDIA_FIX" move "$DST" "$SRC" 2>>"$LOG_FILE"
