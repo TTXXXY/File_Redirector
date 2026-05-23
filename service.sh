@@ -225,7 +225,7 @@ main() {
             _start_monitor
         fi
 
-        [ -s "$QUEUE_IN" ] && sh "$VAR_DISPATCHER" 2>>"$LOG_FILE"
+        { [ -s "$QUEUE_IN" ] || [ -s "$QUEUE_DIR/retry.q" ]; } && sh "$VAR_DISPATCHER" 2>>"$LOG_FILE"
 
         rotate_log
         sleep "$DISPATCH_INTERVAL" &
