@@ -29,6 +29,11 @@ _wait_stable() {
         if [ "$_cur_size" = "$_prev_size" ] && [ "$_cur_ctime" = "$_prev_ctime" ]; then
             _stable=$(( _stable + 1 ))
             if [ "$_stable" -ge 2 ]; then
+                # 0B 文件天然稳定，但极可能是下载器尚未开始写入的空壳，拒绝放行
+                [ "${_cur_size:-0}" = "0" ] && {
+                    log_msg "WARN" "FILE" "文件稳定但大小为0，稍后重试: $FNAME"
+                    return 1
+                }
                 return 0
             fi
         else
@@ -96,15 +101,21 @@ while [ "$_try" -le 2 ]; do
         rm -f "$DST" 2>/dev/null; _try=$(( _try + 1 )); continue
     fi
 
-    # 校验通过，先将源路径记入 done.list，防止 rm 失败后 inotify 二次触发重复搬运
-    printf '%s\n' "$SRC" >> "$QUEUE_DIR/done.list" 2>/dev/null || true
     # 还原源文件时间戳（mtime/atime），确保 MediaStore 扫描后 date_modified 正确
     # 必须在 rm 之前执行，rm 后源文件消失则无法引用
     touch -r "$SRC" "$DST" 2>/dev/null || true
-    rm "$SRC" 2>/dev/null || true
-    log_msg "INFO" "FILE" "cp+校验(第${_try}次): $SRC → $DST"
-    sh "$VAR_MEDIA_FIX" move "$DST" "$SRC" 2>>"$LOG_FILE"
-    exit 0
+    if rm "$SRC" 2>/dev/null; then
+        # rm 成功：搬运完成，写入 done.list 防 inotify 二次触发
+        printf '%s\n' "$SRC" >> "$QUEUE_DIR/done.list" 2>/dev/null || true
+        log_msg "INFO" "FILE" "cp+校验(第${_try}次): $SRC → $DST"
+        sh "$VAR_MEDIA_FIX" move "$DST" "$SRC" 2>>"$LOG_FILE"
+        exit 0
+    else
+        # rm 失败（源文件被其他进程占用）：清理目标副本，交由 dispatcher 下轮重试
+        rm -f "$DST" 2>/dev/null || true
+        log_msg "WARN" "FILE" "源文件删除失败，下轮重试: $FNAME"
+        exit 1
+    fi
 done
 
 log_msg "ERROR" "FILE" "搬运失败: $SRC → $DST_DIR"
