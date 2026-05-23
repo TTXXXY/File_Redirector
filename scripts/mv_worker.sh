@@ -53,17 +53,23 @@ _wait_stable || exit 1
 [ -d "$DST_DIR" ] || mkdir -p "$DST_DIR" 2>/dev/null || \
     { log_msg "ERROR" "FILE" "创建目录失败: $DST_DIR"; exit 1; }
 
-# 重名处理：最多尝试99次
+# 重名处理：目标存在且比源小（不完整副本）则直接覆盖，否则加 _n 后缀
 DST="$DST_DIR/$FNAME"
-_n=1
-while [ -e "$DST" ] && [ "$_n" -lt 100 ]; do
-    case "$FNAME" in
-        *.*) DST="$DST_DIR/${FNAME%.*}_${_n}.${FNAME##*.}" ;;
-        *)   DST="$DST_DIR/${FNAME}_${_n}" ;;
-    esac
-    _n=$(( _n + 1 ))
-done
-[ -e "$DST" ] && { log_msg "WARN" "FILE" "重名冲突，跳过: $FNAME"; exit 0; }
+if [ -e "$DST" ]; then
+    _exist_size=$(wc -c < "$DST" 2>/dev/null | tr -d ' ')
+    _src_size=$(wc -c < "$SRC" 2>/dev/null | tr -d ' ')
+    if [ "${_exist_size:-0}" -ge "${_src_size:-0}" ]; then
+        _n=1
+        while [ -e "$DST" ] && [ "$_n" -lt 100 ]; do
+            case "$FNAME" in
+                *.*) DST="$DST_DIR/${FNAME%.*}_${_n}.${FNAME##*.}" ;;
+                *)   DST="$DST_DIR/${FNAME}_${_n}" ;;
+            esac
+            _n=$(( _n + 1 ))
+        done
+        [ -e "$DST" ] && { log_msg "WARN" "FILE" "重名冲突，跳过: $FNAME"; exit 0; }
+    fi
+fi
 
 # 同分区直接 mv
 _src_dev=$(stat -c '%d' "$(dirname "$SRC")"  2>/dev/null || printf 'x')
@@ -105,8 +111,6 @@ while [ "$_try" -le 2 ]; do
     # 必须在 rm 之前执行，rm 后源文件消失则无法引用
     touch -r "$SRC" "$DST" 2>/dev/null || true
     if rm "$SRC" 2>/dev/null; then
-        # rm 成功：搬运完成，写入 done.list 防 inotify 二次触发
-        printf '%s\n' "$SRC" >> "$QUEUE_DIR/done.list" 2>/dev/null || true
         log_msg "INFO" "FILE" "cp+校验(第${_try}次): $SRC → $DST"
         sh "$VAR_MEDIA_FIX" move "$DST" "$SRC" 2>>"$LOG_FILE"
         exit 0

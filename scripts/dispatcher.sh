@@ -9,7 +9,6 @@
 QUEUE_PROC="$QUEUE_DIR/processing.q"
 QUEUE_DEDUP="$QUEUE_DIR/dedup.q"
 QUEUE_RETRY="$QUEUE_DIR/retry.q"
-QUEUE_DONE="$QUEUE_DIR/done.list"
 DISPATCH_LOCK="$QUEUE_DIR/.dispatch.lock"
 
 # 互斥锁防并发（flock：进程退出时内核自动释放，无残留风险）
@@ -20,16 +19,6 @@ if ! flock -n 8 2>/dev/null; then
 fi
 
 _exit() { exit "${1:-0}"; }
-
-# done.list 防爆：超限则裁剪保留最后100条，避免清空时机不当导致去重失效
-if [ -f "$QUEUE_DONE" ]; then
-    _dl=$(wc -l < "$QUEUE_DONE" 2>/dev/null | tr -d ' ')
-    if [ "${_dl:-0}" -gt 500 ] 2>/dev/null; then
-        _tail=$(tail -100 "$QUEUE_DONE" 2>/dev/null)
-        printf '%s\n' "$_tail" > "$QUEUE_DONE" 2>/dev/null || : > "$QUEUE_DONE"
-        log_msg "WARN" "SYS" "done.list 已裁剪（${_dl} → 100 条）"
-    fi
-fi
 
 # 原子交换队列文件
 mv "$QUEUE_IN" "$QUEUE_PROC" 2>/dev/null || _exit 0
@@ -65,8 +54,6 @@ _running=0
 while IFS= read -r _fp; do
     [ -z "$_fp" ] && continue
     [ -f "$_fp" ]  || continue
-    # 跳过已完成搬运的路径（rm 失败时源文件残留，防止 inotify 二次触发重复搬运）
-    [ -f "$QUEUE_DONE" ] && grep -qxF "$_fp" "$QUEUE_DONE" 2>/dev/null && continue
     _fname=$(basename "$_fp")
     _fdir=$(dirname "$_fp")
 
