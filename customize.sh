@@ -54,7 +54,6 @@ for script in "$MODPATH/scripts/"*.sh; do
 done
 echo "设置完成！"
 
-rm -f "$MODPATH/LICENSE" "$MODPATH/README.md" 
-#rm -f "$MODPATH/CHANGELOG.md"
+#rm -f "$MODPATH/LICENSE" "$MODPATH/README.md" 
 
 echo "模块${MODE}完成 🎉"

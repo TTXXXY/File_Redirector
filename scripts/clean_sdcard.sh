@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # clean_sdcard.sh  —  偷偷许下心愿
-# “远处烟雨下的漓江每次都是匆匆而过”
+# "远处烟雨下的漓江每次都是匆匆而过"
 #──────────────────────
 # 空目录清理：遍历外置存储，删除空目录（受保护目录除外）
 
@@ -11,14 +11,22 @@ _log() { printf '%s [%s] [手动清理] %s\n' "$(date '+%m-%d %H:%M:%S')" "$1" "
 
 [ "$(id -u)" = "0" ] || { _log "ERROR" "需要 root 权限"; exit 1; }
 
-# ── 防多实例：flock 文件锁（进程退出时内核自动释放，无残留风险）──
-LOCK="${MODDIR}/.clean_sdcard.lock"
-exec 8>"$LOCK"
-if ! flock -n 8 2>/dev/null; then
-    _log "WARN" "清理已在进行中，跳过"
-    printf 'RUNNING\n'
-    exit 0
+# ── 防多实例：pid 文件（适配 Android shell 环境，避免 flock fd 生命周期异常）──
+PIDFILE="${MODDIR}/.clean_sdcard.pid"
+
+if [ -f "$PIDFILE" ]; then
+    OLD_PID="$(cat "$PIDFILE" 2>/dev/null)"
+    if [ -n "$OLD_PID" ] && kill -0 "$OLD_PID" 2>/dev/null; then
+        _log "WARN" "清理已在进行中（pid=$OLD_PID），跳过"
+        printf 'RUNNING\n'
+        exit 0
+    else
+        # 旧进程已不存在，清除残留 pid 文件
+        rm -f "$PIDFILE"
+    fi
 fi
+
+printf '%s' "$$" > "$PIDFILE"
 
 # ── 受保护目录 ──
 is_protected() {
@@ -39,6 +47,7 @@ is_protected() {
 if ls /storage/emulated/0/ >/dev/null 2>&1; then
     ROOT="/storage/emulated/0"
 else
+    rm -f "$PIDFILE"
     _log "ERROR" "存储不可访问: /storage/emulated/0"
     exit 1
 fi
@@ -54,4 +63,5 @@ while IFS= read -r _d; do
     fi
 done
 
+rm -f "$PIDFILE"
 _log "INFO" "全盘清理完成"

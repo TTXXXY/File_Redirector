@@ -102,7 +102,7 @@ body.dark .toast-bar{background:#222}
 
 /* 日志 */
 .log-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.log-box{background:#f0f0f0;border-radius:9px;padding:12px;font-family:monospace;font-size:11.5px;line-height:1.75;height:52vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border:1px solid var(--bdr);color:#1c1c1e}
+.log-box{background:#f0f0f0;border-radius:9px;padding:12px;font-family:monospace;font-size:11.5px;line-height:1.75;height:calc(100vh - 56px - 70px - 28px - 30px - 38px - 110px - 60px);min-height:80px;overflow-y:scroll;white-space:pre-wrap;word-break:break-all;border:1px solid var(--bdr);color:#1c1c1e}
 
 /* 日志模式切换 */
 .log-mode{display:flex;gap:6px;margin-bottom:8px}
@@ -115,6 +115,22 @@ body.dark .toast-bar{background:#222}
 .ts{font-size:11px;color:var(--txt2);margin-bottom:5px}
 .aref{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2)}
 .aref input{accent-color:var(--pri)}
+
+/* 日志页底部署名 */
+.log-footer{text-align:center;position:fixed;bottom:70px;left:0;right:0;padding:0 0 14px}
+.log-footer-credit{font-size:13px;line-height:1.8;font-weight:400;font-family:"黑体","STHeiti","SimHei",sans-serif;color:var(--txt)}
+body.dark .log-footer-credit{color:#fff}
+.log-footer-links{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:6px}
+.log-footer-link{font-size:14.5px;color:var(--pri);cursor:pointer;text-decoration:none}
+.log-footer-link:active{opacity:.6}
+.log-footer-sep{font-size:14.5px;color:var(--txt2);opacity:.5}
+
+/* 版本日志弹窗 */
+.changelog-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:flex-end}
+.changelog-ov.open{display:flex}
+.changelog-mod{background:var(--sur);border-radius:var(--r) var(--r) 0 0;padding:20px;width:100%;max-height:75vh;overflow-y:auto;transition:background .3s}
+.changelog-mod h3{font-size:16px;font-weight:600;margin-bottom:14px}
+.changelog-content{font-family:monospace;font-size:12.5px;line-height:1.75;color:var(--txt);white-space:pre-wrap;word-break:break-all}
 
 /* 弹窗 */
 .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end}
@@ -203,22 +219,17 @@ body.dark .toast-bar{background:#222}
     </div>
   </div>
   <div class="card">
-    <div class="ctit">主动扫描</div>
-    <div class="srow" style="border-bottom:none">
-      <div class="si"><div class="sl-t">立即扫描</div><div class="sl-d">对所有监控目录执行一次全量扫描并重定向，不受被动扫描开关约束。</div></div>
+    <div class="ctit">扫描与清理</div>
+    <div class="srow">
+      <div class="si"><div class="sl-t">主动扫描</div><div class="sl-d">对所有监控目录执行一次全量扫描并重定向，不受被动扫描开关约束。</div></div>
       <button class="btn bp" id="btnRescan" onclick="triggerRescan()" style="white-space:nowrap;padding:0 18px">执行</button>
     </div>
-  </div>
-  <div class="card">
-    <div class="ctit">手动清理空文件夹</div>
-    <div class="srow">
+    <div class="srow" style="border-bottom:none">
       <div class="si">
-        <div class="sl-t">扫描 /sdcard</div>
-        <div class="sl-d">递归扫描内部存储（/sdcard），rmdir 遇非空目录自动跳过，不会误删有内容的目录。在扫描过程中 WebUI 可能会出现卡顿，属正常现象，请耐心等待扫描完成。</div>
+        <div class="sl-t">清理空文件夹</div>
+        <div class="sl-d">递归扫描外部存储（/sdcard）， rmdir 遇非空目录自动跳过，不会误删有内容的目录。</div>
       </div>
-    </div>
-    <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-      <button class="btn bp" id="btnSweep" onclick="manualSweep()" style="flex:1">扫描并清理</button>
+      <button class="btn bp" id="btnSweep" onclick="manualSweep()" style="white-space:nowrap;padding:0 18px">执行</button>
     </div>
     <div id="sweepLog" style="display:none;margin-top:8px;font-size:11px;font-family:monospace;color:var(--txt2);max-height:160px;overflow-y:auto;background:var(--bg);border:1px solid var(--bdr);border-radius:6px;padding:6px 8px;white-space:pre-wrap;word-break:break-all"></div>
   </div>
@@ -255,6 +266,17 @@ body.dark .toast-bar{background:#222}
   </div>
 
   <div id="logBox" class="log-box">加载中...</div>
+  <div class="log-footer">
+    <div class="log-footer-credit">Designed by 偷偷许下心愿</div>
+    <div class="log-footer-credit">Made with ❤️</div>
+    <div class="log-footer-links">
+      <a class="log-footer-link" onclick="openUrl('https://github.com/TTXXXY/File_Redirector/releases')">更新查询</a>
+      <span class="log-footer-sep">|</span>
+      <a class="log-footer-link" onclick="openCoolapk('3619850')">问题反馈</a>
+      <span class="log-footer-sep">|</span>
+      <a class="log-footer-link" onclick="showChangelog()">版本日志</a>
+    </div>
+  </div>
 </div>
 
 <!-- 底部标签栏 -->
@@ -319,6 +341,15 @@ body.dark .toast-bar{background:#222}
 </div>
 
 <div id="toastBar" class="toast-bar"></div>
+
+<!-- 版本日志弹窗 -->
+<div id="changelogOv" class="changelog-ov" onclick="if(event.target===this)closeChangelog()">
+  <div class="changelog-mod">
+    <h3>版本日志</h3>
+    <div class="changelog-content" id="changelogContent">加载中...</div>
+    <div style="margin-top:16px"><button class="btn" style="width:100%" onclick="closeChangelog()">关闭</button></div>
+  </div>
+</div>
 
 <script>
 // ── KSU exec ─────────────────────────────────────────────────
@@ -888,6 +919,7 @@ function triggerRescan(){
 
 // ── 手动清理空文件夹 ─────────────────────────────────────────
 var _sweepRunning=false;
+var _sweepTimer=null;
 function manualSweep(){
   if(_sweepRunning){toast('清理正在进行中，请稍候');return;}
   var btn=document.getElementById('btnSweep');
@@ -896,9 +928,17 @@ function manualSweep(){
   btn.disabled=true; btn.textContent='清理中...';
   logEl.style.display='none'; logEl.textContent='';
   toast('清理中，完成后请到日志页查看结果');
-  exec("sh '"+M+"/scripts/clean_sdcard.sh'",function(e,out){
+  // 超时保护：120秒后强制解锁，避免 exec 回调未触发导致永久锁定
+  _sweepTimer=setTimeout(function(){
     _sweepRunning=false;
-    btn.disabled=false; btn.textContent='扫描并清理';
+    btn.disabled=false; btn.textContent='执行';
+    logEl.textContent='执行超时，请重试';
+    logEl.style.display='block';
+  },120000);
+  exec("sh '"+M+"/scripts/clean_sdcard.sh'",function(e,out){
+    clearTimeout(_sweepTimer); _sweepTimer=null;
+    _sweepRunning=false;
+    btn.disabled=false; btn.textContent='执行';
     if(!out&&e!==0){
       logEl.textContent='执行失败，请查看日志';
       logEl.style.display='block';
@@ -920,6 +960,32 @@ function manualSweep(){
     }
     logEl.style.display='block';
   });
+}
+
+// ── 外部链接 & 版本日志 ──────────────────────────────────────
+function openUrl(url){
+  // 通过 am start 调起系统浏览器，KSU/APatch WebUI 内 window.open 无效
+  exec("am start -a android.intent.action.VIEW -d '"+url+"' >/dev/null 2>&1");
+}
+function openCoolapk(uid){
+  // 优先尝试跳转酷安 App，失败则降级到浏览器
+  exec("am start -a android.intent.action.VIEW -d 'coolmarket://u/"+uid+"' >/dev/null 2>&1",function(e){
+    if(e!==0){
+      exec("am start -a android.intent.action.VIEW -d 'https://www.coolapk.com/u/"+uid+"' >/dev/null 2>&1");
+    }
+  });
+}
+function showChangelog(){
+  var ov=document.getElementById('changelogOv');
+  var el=document.getElementById('changelogContent');
+  ov.classList.add('open');
+  el.textContent='加载中...';
+  exec("cat '"+M+"/CHANGELOG.md' 2>/dev/null",function(e,out){
+    el.textContent=(out||'').trim()||'暂无日志内容';
+  });
+}
+function closeChangelog(){
+  document.getElementById('changelogOv').classList.remove('open');
 }
 
 // ── 日志页 ───────────────────────────────────────────────────
