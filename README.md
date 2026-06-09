@@ -179,7 +179,7 @@ graph TD
 
 ### 参与贡献
 
-欢迎提交 Issue 和 Pull Request！也可[直接向我反馈](https://www.coolapk.com/u/3619850)！
+欢迎提交 Issue 和 Pull Request！也欢迎[私信向我反馈](https://www.coolapk.com/u/3619850)！
 
 ---
 
