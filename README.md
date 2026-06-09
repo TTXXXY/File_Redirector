@@ -2,15 +2,6 @@
 
 > 一个运行于 Android root 环境的自动化文件管理模块，用于解决应用随意将文件写入不规范目录的问题，实现存储空间的规范与整洁。本模块基于 inotifywait 事件驱动构建：监控、调度、搬运三层解耦架构，空闲时功耗极低。
 
-<div align="center">
-
-![版本](https://img.shields.io/badge/版本-v4.1.0-blue)
-![平台](https://img.shields.io/badge/平台-Android-green)
-![框架](https://img.shields.io/badge/框架-KernelSU%20%7C%20Magisk%20%7C%20APatch-orange)
-![许可证](https://img.shields.io/badge/许可证-GPLv3-red)
-
-</div>
-
 ---
 
 ## 目录
@@ -179,7 +170,7 @@ graph TD
 
 ### 参与贡献
 
-欢迎提交 Issue 和 Pull Request！也欢迎[私信向我反馈](https://www.coolapk.com/u/3619850)！
+欢迎提交 Issue 和 Pull Request！同时欢迎[私信向我反馈](https://www.coolapk.com/u/3619850)！
 
 ---
 
