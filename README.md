@@ -156,6 +156,7 @@ graph TD
 - Android 版本：（如 Android 15）
 
 **日志**
+
 请附上完整的 redirector.log：
 （WebUI 日志页可一键复制，或从模块目录下直接提取）
 
